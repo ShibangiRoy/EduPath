@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUserProfile(data) {
+      return data is map &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 200)) &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 200)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000)) &&
+        (!('goal' in data) || (data.goal is string && data.goal.size() <= 200)) &&
+        (!('experience' in data) || (data.experience in ['beginner', 'intermediate', 'advanced'])) &&
+        (!('hoursPerWeek' in data) || (data.hoursPerWeek is number && data.hoursPerWeek >= 1 && data.hoursPerWeek <= 100)) &&
+        (!('resumeFileName' in data) || (data.resumeFileName is string && data.resumeFileName.size() <= 200)) &&
+        (!('bioNote' in data) || (data.bioNote is string && data.bioNote.size() <= 2000)) &&
+        (!('currentScreen' in data) || (data.currentScreen is string && data.currentScreen.size() <= 50)) &&
+        (!('weeklyChecks' in data) || data.weeklyChecks is map) &&
+        (!('dynamicTasks' in data) || data.dynamicTasks is map) &&
+        (!('recognizedSkills' in data) || (data.recognizedSkills is list && data.recognizedSkills.size() <= 60)) &&
+        (!('customSkillRatings' in data) || data.customSkillRatings is map) &&
+        (!('quizHistory' in data) || (data.quizHistory is list && data.quizHistory.size() <= 50)) &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 100)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 100));
+    }
+
+    function isValidChatMessage(data) {
+      return data is map &&
+        data.keys().hasAll(['id', 'userId', 'role', 'text']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.role in ['user', 'ai'] &&
+        data.text is string && data.text.size() <= 5000 &&
+        (!('cta' in data) || (data.cta is string && data.cta.size() <= 100)) &&
+        (!('tags' in data) || (data.tags is list && data.tags.size() <= 10)) &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 100));
+    }
+
+    // User profile document
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data);
+      allow delete: if isOwner(userId);
+
+      // User chat messages
+      match /messages/{messageId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(messageId) && isValidChatMessage(request.resource.data);
+        allow update, delete: if isOwner(userId);
+      }
+    }
+
+    // Health probe
+    match /test/connection {
+      allow get: if true;
+    }
+  }
+}

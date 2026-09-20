@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User educational profile, current goals, onboarding preferences, and progress state",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "goal": { "type": "string", "maxLength": 200, "description": "Target educational career goal" },
+        "experience": { "type": "string", "enum": ["beginner", "intermediate", "advanced"], "description": "Current experience level" },
+        "hoursPerWeek": { "type": "number", "description": "Available study hours per week" },
+        "resumeFileName": { "type": "string", "maxLength": 200, "description": "Name of uploaded resume file" },
+        "bioNote": { "type": "string", "maxLength": 2000, "description": "Self-described background notes and projects" },
+        "currentScreen": { "type": "string", "maxLength": 50, "description": "Last active screen" },
+        "weeklyChecks": { "type": "object", "description": "Map of task completion flags" },
+        "dynamicTasks": { "type": "object", "description": "Map of unlocked dynamic tasks per day" },
+        "recognizedSkills": { "type": "array", "description": "List of user-selected or detected skills" },
+        "customSkillRatings": { "type": "object", "description": "Map of custom skill ratings" },
+        "quizHistory": { "type": "array", "description": "Recent completed AI quiz assessment results" },
+        "createdAt": { "type": "string", "description": "Profile creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Profile last updated timestamp" }
+      },
+      "required": ["id"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "Messages exchanged between learner and AI mentor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Message ID" },
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "role": { "type": "string", "enum": ["user", "ai"], "description": "Sender role" },
+        "text": { "type": "string", "maxLength": 5000, "description": "Message text body" },
+        "tags": { "type": "array", "description": "Topic tags" },
+        "cta": { "type": "string", "maxLength": 100, "description": "Call-to-action button text" },
+        "createdAt": { "type": "string", "description": "Timestamp when message was sent" }
+      },
+      "required": ["id", "userId", "role", "text", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile with goal and progress state"
+    },
+    "/users/{userId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Interactive AI mentor dialogue history for this user"
+    }
+  }
+}

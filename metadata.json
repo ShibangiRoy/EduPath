@@ -1,0 +1,8 @@
+{
+  "name": "EDUPATH",
+  "description": "Your AI-powered learning journey with real-time multi-device synchronization, personalized skill gap mapping, and interactive roadmaps.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
